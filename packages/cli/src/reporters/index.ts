@@ -1,5 +1,5 @@
 import pc from "picocolors";
-import type { LintResult } from "@airch/core";
+import type { LintResult } from "@genbuhase/airch-core";
 
 export type ReporterFormat = "pretty" | "json" | "github" | "sarif";
 

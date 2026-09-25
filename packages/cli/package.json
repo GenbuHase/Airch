@@ -17,7 +17,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@airch/core": "workspace:*",
+    "@genbuhase/airch-core": "workspace:*",
     "@clack/prompts": "^1.8.1",
     "commander": "^13.1.0",
     "js-yaml": "^4.3.2",

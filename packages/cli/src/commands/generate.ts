@@ -5,7 +5,7 @@ import {
   GeneratorEngine,
   ALL_TARGETS,
   type GeneratorTarget,
-} from "@airch/core";
+} from "@genbuhase/airch-core";
 import { logger } from "../utils/logger.js";
 
 export interface GenerateCommandOptions {

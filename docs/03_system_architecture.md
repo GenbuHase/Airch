@@ -169,7 +169,7 @@ flowchart TD
 `airch ui` コマンドで起動する、ブラウザ向けローカルHTTPおよびリアルタイム通信サーバーです。
 
 - **主要責務**:
-  1. **静的アセット配信**: ビルド済みの `@airch/ui`（Vite SPA）をローカルポート（デフォルト: `4567`）で配信。
+  1. **静的アセット配信**: ビルド済みの `@genbuhase/airch-ui`（Vite SPA）をローカルポート（デフォルト: `4567`）で配信。
   2. **API エンドポイント**:
      - `GET /api/manifest`: 現在解決されている `airch.yaml` の内容を取得。
      - `POST /api/manifest`: GUI上で編集されたマニフェストを検証・保存。
@@ -245,16 +245,16 @@ CLIおよびGUIツール（`airch ui`）の長期的な保守性と再利用性�
 
 ```text
 packages/
-  ├── core/       # @airch/core
+  ├── core/       # @genbuhase/airch-core
   │               ├── ManifestLoader (YAMLパース, Zod検証)
   │               ├── GeneratorEngine (Markdown決定論的生成)
   │               └── StructureLinter (AST境界解析, 命名規則チェック)
   │
-  ├── cli/        # @airch/cli
+  ├── cli/        # @genbuhase/airch
   │               ├── Commander CLI 定義 (init, generate, check, ui)
   │               └── CI/CD レポーター (Console, GitHub, JSON, SARIF)
   │
-  └── ui/         # @airch/ui (GUI Web Dashboard)
+  └── ui/         # @genbuhase/airch-ui (GUI Web Dashboard)
                   ├── React 19 + Vite フロントエンド
                   ├── @xyflow/react アーキテクチャグラフ
                   └── Monaco Editor 双方向同期エディタ
@@ -266,4 +266,4 @@ packages/
   - `cli` は `ui` コマンド実行時に `ui` の静的ビルドアセットを内蔵HTTPサーバーで配信。
 - **利点**:
   - コアエンジンに一切のUI依存・CLI依存が混入せず、純粋関数としてテスト容易性を最大化。
-  - 将来的なVSCode拡張機能やGitHub App/SaaSバックエンドの開発時にも `@airch/core` をそのまま再利用可能。
+  - 将来的なVSCode拡張機能やGitHub App/SaaSバックエンドの開発時にも `@genbuhase/airch-core` をそのまま再利用可能。

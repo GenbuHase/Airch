@@ -1,7 +1,7 @@
 import * as path from "node:path";
 import { execSync } from "node:child_process";
 import pc from "picocolors";
-import { ManifestLoader, StructureLinter } from "@airch/core";
+import { ManifestLoader, StructureLinter } from "@genbuhase/airch-core";
 import { renderLintReport, type ReporterFormat } from "../reporters/index.js";
 import { logger } from "../utils/logger.js";
 

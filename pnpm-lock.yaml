@@ -17,12 +17,12 @@ importers:
 
   packages/cli:
     dependencies:
-      '@airch/core':
-        specifier: workspace:*
-        version: link:../core
       '@clack/prompts':
         specifier: ^1.8.1
         version: 1.8.1
+      '@genbuhase/airch-core':
+        specifier: workspace:*
+        version: link:../core
       commander:
         specifier: ^13.1.0
         version: 13.1.0

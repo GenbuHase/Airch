@@ -40,7 +40,7 @@ CLIおよびYAMLマニフェスト（`airch.yaml`）は、Git管理やCI/CDパ�
 ┌────────────────────────────────────────────────────────┐
 │              ローカルサーバー (Node.js / Hono)          │
 │  - 静的アセット配信 (Vite SPA)                          │
-│  - @airch/core API (ManifestLoader, Linter, Generator) │
+│  - @genbuhase/airch-core (Loader, Linter, Generator)   │
 │  - ファイル監視 (File Watcher -> WebSocket / SSE)       │
 └───────────────────────────┬────────────────────────────┘
                             │ (localhost:4567)
@@ -150,17 +150,17 @@ CLIおよびYAMLマニフェスト（`airch.yaml`）は、Git管理やCI/CDパ�
 ```text
 airch/
 ├── packages/
-│   ├── core/           # @airch/core: マニフェスト解析、Linter、Generator (純粋ロジック)
-│   ├── cli/            # @airch/cli: commander によるコマンドライン実行バイナリ
-│   └── ui/             # @airch/ui: Vite + React による Web GUI アプリケーション
+│   ├── core/           # @genbuhase/airch-core: マニフェスト解析、Linter、Generator (純粋ロジック)
+│   ├── cli/            # @genbuhase/airch: commander によるコマンドライン実行バイナリ
+│   └── ui/             # @genbuhase/airch-ui: Vite + React による Web GUI アプリケーション
 ├── docs/               # 設計ドキュメント群
 ├── package.json
 └── pnpm-workspace.yaml
 ```
 
-- `@airch/core`: CLIおよびUIの双方から利用される純粋なTypeScriptライブラリ。Node.js / ブラウザ双方で動作可能な設計。
-- `@airch/cli`: ターミナルから `airch` コマンドを実行するエントリポイント。`airch ui` 実行時に `@airch/ui` の静的ビルドを内蔵サーバーで配信。
-- `@airch/ui`: Webアプリケーション。開発時は独立して `pnpm --filter ui dev` でHMR開発可能。
+- `@genbuhase/airch-core`: CLIおよびUIの双方から利用される純粋なTypeScriptライブラリ。Node.js / ブラウザ双方で動作可能な設計。
+- `@genbuhase/airch`: ターミナルから `airch` コマンドを実行するエントリポイント。`airch ui` 実行時に `@genbuhase/airch-ui` の静的ビルドを内蔵サーバーで配信。
+- `@genbuhase/airch-ui`: Webアプリケーション。開発時は独立して `pnpm --filter @genbuhase/airch-ui dev` でHMR開発可能。
 
 ---
 

@@ -14,7 +14,7 @@ import {
   getPreset,
   stringifyManifest,
   type PresetName,
-} from "@airch/core";
+} from "@genbuhase/airch-core";
 import { logger } from "../utils/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -94,7 +94,7 @@ export class UIServer {
       path.resolve(__dirname, "../../../ui/dist"),
       path.resolve(__dirname, "../../ui/dist"),
       path.resolve(process.cwd(), "packages/ui/dist"),
-      path.resolve(process.cwd(), "node_modules/@airch/ui/dist"),
+      path.resolve(process.cwd(), "node_modules/@genbuhase/airch-ui/dist"),
     ];
 
     let foundDir = candidates[0]!;
@@ -373,7 +373,7 @@ export class UIServer {
         stat = await fs.stat(filePath);
       } catch {
         res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-        res.end("UI assets not found. Run 'pnpm --filter @airch/ui build' to build the frontend.");
+        res.end("UI assets not found. Run 'pnpm --filter @genbuhase/airch-ui build' to build the frontend.");
         return;
       }
     }

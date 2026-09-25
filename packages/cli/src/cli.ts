@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { AirchConfigError } from "@airch/core";
+import { AirchConfigError } from "@genbuhase/airch-core";
 import { executeGenerate, type GenerateCommandOptions } from "./commands/generate.js";
 import { executeCheck, type CheckCommandOptions } from "./commands/check.js";
 import { executeInit, type InitCommandOptions } from "./commands/init.js";

@@ -1,5 +1,5 @@
 {
-  "name": "@airch/core",
+  "name": "@genbuhase/airch-core",
   "version": "0.1.0",
   "description": "Core manifest parser, validator, and AI context generator for airch",
   "type": "module",

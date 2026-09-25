@@ -125,4 +125,59 @@ project: {}
       expect(text).toContain("airch ui");
     }
   });
+
+  it("未初期化（airch.yaml が存在しない）ディレクトリで initialized: false が返り、POST /api/init で初期化できる", async () => {
+    // 空の一時ディレクトリを作成
+    const emptyDir = await fs.mkdtemp(path.join(os.tmpdir(), "airch-uninit-test-"));
+    const uninitManifestPath = path.join(emptyDir, "airch.yaml");
+
+    const uninitServer = new UIServer({
+      port: 0,
+      host: "127.0.0.1",
+      configPath: uninitManifestPath,
+    });
+    await uninitServer.start();
+    // @ts-expect-error private access for test
+    const uninitPort = uninitServer.server?.address()?.port;
+    const uninitUrl = `http://127.0.0.1:${uninitPort}`;
+
+    try {
+      // 1. 未初期化時の GET /api/manifest
+      const resManifest = await fetch(`${uninitUrl}/api/manifest`);
+      expect(resManifest.status).toBe(200);
+      const dataManifest = await resManifest.json();
+      expect(dataManifest.initialized).toBe(false);
+      expect(dataManifest.message).toBeDefined();
+
+      // 2. 未初期化時の GET /api/diagnostics
+      const resDiag = await fetch(`${uninitUrl}/api/diagnostics`);
+      expect(resDiag.status).toBe(200);
+      const dataDiag = await resDiag.json();
+      expect(dataDiag.diagnostics).toEqual([]);
+
+      // 3. POST /api/init で初期化
+      const resInit = await fetch(`${uninitUrl}/api/init`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          architecture: "feature-sliced",
+          projectName: "my-uninit-app",
+        }),
+      });
+      expect(resInit.status).toBe(200);
+      const dataInit = await resInit.json();
+      expect(dataInit.success).toBe(true);
+
+      // 4. 初期化後の GET /api/manifest
+      const resAfter = await fetch(`${uninitUrl}/api/manifest`);
+      expect(resAfter.status).toBe(200);
+      const dataAfter = await resAfter.json();
+      expect(dataAfter.initialized).toBe(true);
+      expect(dataAfter.manifest.project.name).toBe("my-uninit-app");
+      expect(dataAfter.manifest.project.architecture).toBe("feature-sliced");
+    } finally {
+      await uninitServer.stop();
+      await fs.rm(emptyDir, { recursive: true, force: true });
+    }
+  });
 });

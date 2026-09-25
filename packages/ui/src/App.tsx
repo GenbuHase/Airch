@@ -17,6 +17,10 @@ import {
   Code2,
   FolderGit2,
   Info,
+  Rocket,
+  Terminal,
+  Wand2,
+  ArrowRight,
 } from "lucide-react";
 import {
   fetchManifest,
@@ -25,6 +29,7 @@ import {
   runFix,
   fetchRules,
   generateRulesOnDisk,
+  initProject,
   type ManifestData,
   type DiagnosticsData,
   type GeneratedRulesData,
@@ -44,6 +49,8 @@ export function App() {
   const [rawYaml, setRawYaml] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
+  const [initializing, setInitializing] = useState<boolean>(false);
+  const [cliCopied, setCliCopied] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "info" | "success" | "error" } | null>(null);
   const [activeRuleTarget, setActiveRuleTarget] = useState<string>("agents");
   const [severityFilter, setSeverityFilter] = useState<"all" | "error" | "warning">("all");
@@ -57,11 +64,17 @@ export function App() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [m, d, r] = await Promise.all([fetchManifest(), fetchDiagnostics(), fetchRules()]);
+      const m = await fetchManifest();
       setManifestData(m);
-      setRawYaml(m.rawYaml);
-      setDiagnosticsData(d);
-      setRulesData(r);
+      if (m.initialized && m.manifest) {
+        setRawYaml(m.rawYaml || "");
+        const [d, r] = await Promise.all([fetchDiagnostics(), fetchRules()]);
+        setDiagnosticsData(d);
+        setRulesData(r);
+      } else {
+        setDiagnosticsData(null);
+        setRulesData(null);
+      }
     } catch (err) {
       console.error(err);
       showToast("データの同期に失敗しました", "error");
@@ -73,6 +86,30 @@ export function App() {
   useEffect(() => {
     loadAll();
   }, []);
+
+  const handleInit = async (architecture: "feature-sliced" | "clean-architecture" | "layered") => {
+    setInitializing(true);
+    try {
+      const res = await initProject({ architecture });
+      if (res.success) {
+        showToast(`'${architecture}' プリセットで初期化を完了しました！`, "success");
+        await loadAll();
+      } else {
+        showToast(`初期化エラー: ${res.message || "不明なエラー"}`, "error");
+      }
+    } catch {
+      showToast("初期化リクエストに失敗しました", "error");
+    } finally {
+      setInitializing(false);
+    }
+  };
+
+  const handleCopyCliCommand = (cmd: string) => {
+    navigator.clipboard.writeText(cmd);
+    setCliCopied(true);
+    showToast("CLI コマンドをコピーしました！", "info");
+    setTimeout(() => setCliCopied(false), 2000);
+  };
 
   const handleSaveManifest = async () => {
     setSaving(true);
@@ -131,6 +168,234 @@ export function App() {
           <span className="loading loading-spinner loading-lg text-primary"></span>
           <span className="text-sm font-medium text-base-content/70">Loading Architecture Data...</span>
         </div>
+      </div>
+    );
+  }
+
+  const isInitialized = Boolean(manifestData?.initialized && manifestData?.manifest);
+
+  // =========================================================================
+  // 未初期化時のセットアップ案内画面
+  // =========================================================================
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex flex-col bg-base-100 text-base-content font-sans">
+        {/* トースト通知 */}
+        {toastMessage && (
+          <div className="toast toast-top toast-end z-50">
+            <div
+              className={`alert shadow-lg text-sm font-medium ${
+                toastMessage.type === "success"
+                  ? "alert-success"
+                  : toastMessage.type === "error"
+                  ? "alert-error"
+                  : "alert-info"
+              }`}
+            >
+              {toastMessage.type === "success" && <CheckCircle2 size={18} />}
+              {toastMessage.type === "error" && <XCircle size={18} />}
+              {toastMessage.type === "info" && <Info size={18} />}
+              <span>{toastMessage.text}</span>
+            </div>
+          </div>
+        )}
+
+        {/* ヘッダー */}
+        <header className="navbar bg-base-100 border-b border-base-300 px-6 py-2 sticky top-0 z-40 shadow-xs">
+          <div className="navbar-start flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-primary-content font-black text-lg shadow-sm">
+              A
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-base tracking-tight">airch ui</span>
+                <span className="badge badge-xs badge-neutral font-mono">v1.0</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-warning font-semibold">
+                <AlertTriangle size={12} />
+                <span>未初期化プロジェクト</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="navbar-end flex items-center gap-2">
+            <button
+              onClick={loadAll}
+              disabled={loading || initializing}
+              className="btn btn-outline btn-sm gap-1.5"
+              title="設定の検出を再試行"
+            >
+              <RefreshCw size={14} className={loading ? "animate-spin text-primary" : ""} />
+              <span>再読み込み</span>
+            </button>
+            <ThemeSelector />
+          </div>
+        </header>
+
+        {/* 未初期化案内メインコンテンツ */}
+        <main className="flex-1 p-6 md:p-10 max-w-5xl mx-auto w-full flex flex-col justify-center space-y-8">
+          {/* ヒーローセクション */}
+          <div className="text-center space-y-3 max-w-2xl mx-auto">
+            <div className="inline-flex p-3 rounded-2xl bg-primary/10 text-primary mb-2 shadow-inner">
+              <Rocket size={40} />
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight">
+              Airch の初期化が必要です
+            </h1>
+            <p className="text-base text-base-content/70 leading-relaxed">
+              プロジェクト内にアーキテクチャ定義ファイル（<code className="text-primary font-mono font-semibold bg-base-200 px-1.5 py-0.5 rounded">airch.yaml</code>）が見つかりません。<br className="hidden sm:inline" />
+              モジュール境界の可視化やルール診断、AIエージェント向け指示書を生成するには、まずプロジェクトを初期化してください。
+            </p>
+          </div>
+
+          {/* 2つのセットアップ方法 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            {/* 方法 1: CLI 対話型セットアップ（推奨） */}
+            <div className="card bg-base-200 border border-base-300 shadow-md flex flex-col">
+              <div className="card-body p-6 flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-lg bg-base-300 text-primary">
+                      <Terminal size={20} />
+                    </div>
+                    <div>
+                      <span className="badge badge-primary badge-xs uppercase font-mono tracking-wider font-semibold mb-0.5">Recommended</span>
+                      <h2 className="card-title text-lg font-bold">ターミナルから初期化</h2>
+                    </div>
+                  </div>
+                  <p className="text-xs text-base-content/70 leading-relaxed">
+                    プロジェクトのルートディレクトリで以下のコマンドを実行し、対話型プロンプトに従ってプロジェクト名や構成を選択します。
+                  </p>
+
+                  <div className="mockup-code bg-base-300 text-xs py-3 px-4 shadow-inner relative group border border-base-content/10">
+                    <pre data-prefix="$">
+                      <code className="text-primary-content font-mono font-bold">pnpm airch init</code>
+                    </pre>
+                    <button
+                      onClick={() => handleCopyCliCommand("pnpm airch init")}
+                      className="btn btn-ghost btn-xs absolute right-2 top-2.5 opacity-80 hover:opacity-100"
+                      title="コマンドをコピー"
+                    >
+                      {cliCopied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
+                      <span className="text-[11px] font-normal">{cliCopied ? "コピー済み" : "コピー"}</span>
+                    </button>
+                  </div>
+
+                  <div className="alert alert-info py-2 px-3 text-xs rounded-lg flex items-start gap-2 shadow-xs">
+                    <Info size={16} className="shrink-0 mt-0.5" />
+                    <span>npx を利用する場合は <code className="font-mono font-semibold">npx @genbuhase/airch init</code> を実行してください。</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-base-300 space-y-2">
+                  <p className="text-[11px] text-base-content/60">
+                    ※ ターミナルで初期化コマンド完了後、下のボタンでUIを同期してください。
+                  </p>
+                  <button
+                    onClick={loadAll}
+                    disabled={loading}
+                    className="btn btn-primary w-full gap-2 font-semibold shadow-sm"
+                  >
+                    <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
+                    <span>初期化完了後に再読み込み</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 方法 2: この画面からクイック初期化 */}
+            <div className="card bg-base-200 border border-base-300 shadow-md flex flex-col">
+              <div className="card-body p-6 flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-lg bg-base-300 text-accent">
+                      <Wand2 size={20} />
+                    </div>
+                    <div>
+                      <span className="badge badge-accent badge-xs uppercase font-mono tracking-wider font-semibold mb-0.5">Quick Setup</span>
+                      <h2 className="card-title text-lg font-bold">UI からワンクリック初期化</h2>
+                    </div>
+                  </div>
+                  <p className="text-xs text-base-content/70 leading-relaxed">
+                    プリセットを選択すると、すぐに標準的な <code className="font-mono text-primary">airch.yaml</code> と AIルールファイルが生成されます。
+                  </p>
+
+                  {/* プリセット選択ボタン */}
+                  <div className="space-y-2.5 pt-1">
+                    {/* Feature-Sliced Design */}
+                    <div className="p-3 rounded-box bg-base-100 border border-base-300 hover:border-primary/50 transition-all flex items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-xs">Feature-Sliced Design</span>
+                          <span className="badge badge-xs badge-info font-mono">Frontend / Next.js</span>
+                        </div>
+                        <p className="text-[11px] text-base-content/60 mt-0.5">
+                          app / widgets / features / entities / shared
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleInit("feature-sliced")}
+                        disabled={initializing}
+                        className="btn btn-primary btn-xs gap-1 font-semibold shrink-0"
+                      >
+                        {initializing ? <span className="loading loading-spinner loading-xs" /> : <ArrowRight size={13} />}
+                        <span>初期化</span>
+                      </button>
+                    </div>
+
+                    {/* Clean Architecture */}
+                    <div className="p-3 rounded-box bg-base-100 border border-base-300 hover:border-primary/50 transition-all flex items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-xs">Clean Architecture</span>
+                          <span className="badge badge-xs badge-success font-mono">Backend / DDD</span>
+                        </div>
+                        <p className="text-[11px] text-base-content/60 mt-0.5">
+                          domain / usecase / interface / infrastructure
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleInit("clean-architecture")}
+                        disabled={initializing}
+                        className="btn btn-primary btn-xs gap-1 font-semibold shrink-0"
+                      >
+                        {initializing ? <span className="loading loading-spinner loading-xs" /> : <ArrowRight size={13} />}
+                        <span>初期化</span>
+                      </button>
+                    </div>
+
+                    {/* Layered MVC */}
+                    <div className="p-3 rounded-box bg-base-100 border border-base-300 hover:border-primary/50 transition-all flex items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-xs">Layered MVC</span>
+                          <span className="badge badge-xs badge-neutral font-mono">Simple / 3-Tier</span>
+                        </div>
+                        <p className="text-[11px] text-base-content/60 mt-0.5">
+                          controllers / services / repositories / models
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleInit("layered")}
+                        disabled={initializing}
+                        className="btn btn-primary btn-xs gap-1 font-semibold shrink-0"
+                      >
+                        {initializing ? <span className="loading loading-spinner loading-xs" /> : <ArrowRight size={13} />}
+                        <span>初期化</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-base-300">
+                  <p className="text-[11px] text-base-content/60">
+                    ※ 初期化後に上部の「airch.yaml」タブからいつでも構成をカスタマイズ可能です。
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }

@@ -1,5 +1,7 @@
 export interface ManifestData {
-  manifest: {
+  initialized?: boolean;
+  message?: string;
+  manifest?: {
     version: string;
     project: {
       name: string;
@@ -28,8 +30,8 @@ export interface ManifestData {
     };
     commands?: Record<string, { run: string; description?: string }>;
   };
-  configPath: string;
-  rawYaml: string;
+  configPath?: string;
+  rawYaml?: string;
 }
 
 export interface DiagnosticItem {
@@ -68,6 +70,22 @@ export interface GeneratedRulesData {
 export async function fetchManifest(): Promise<ManifestData> {
   const res = await fetch("/api/manifest");
   if (!res.ok) throw new Error("マニフェストの取得に失敗しました");
+  const data = await res.json();
+  if (data.initialized === undefined) {
+    data.initialized = Boolean(data.manifest);
+  }
+  return data;
+}
+
+export async function initProject(options: {
+  architecture: "feature-sliced" | "clean-architecture" | "layered";
+  projectName?: string;
+}): Promise<{ success: boolean; manifestPath?: string; message?: string; files?: string[] }> {
+  const res = await fetch("/api/init", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(options),
+  });
   return res.json();
 }
 

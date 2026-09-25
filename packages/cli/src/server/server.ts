@@ -9,6 +9,11 @@ import {
   ManifestSchema,
   StructureLinter,
   GeneratorEngine,
+  AirchConfigError,
+  detectProject,
+  getPreset,
+  stringifyManifest,
+  type PresetName,
 } from "@airch/core";
 import { logger } from "../utils/logger.js";
 
@@ -78,7 +83,7 @@ export class UIServer {
   private staticDir: string;
 
   constructor(options: ServerOptions = {}) {
-    this.port = options.port || 4567;
+    this.port = options.port !== undefined ? options.port : 4567;
     this.host = options.host || "localhost";
     this.configPath = options.configPath;
     this.isReadonly = options.readonly || false;
@@ -119,10 +124,12 @@ export class UIServer {
       this.server.on("error", reject);
 
       this.server.listen(this.port, this.host, () => {
-        const url = `http://${this.host}:${this.port}/`;
+        const address = this.server?.address();
+        const actualPort = typeof address === "object" && address ? address.port : this.port;
+        const url = `http://${this.host}:${actualPort}/`;
         resolve({
           url,
-          port: this.port,
+          port: actualPort,
           close: () => this.stop(),
         });
       });
@@ -185,9 +192,20 @@ export class UIServer {
 
     // 1. GET /api/manifest
     if (pathname === "/api/manifest" && req.method === "GET") {
-      const { manifest, configPath } = await loader.load(this.configPath);
-      const rawYaml = await fs.readFile(configPath, "utf-8");
-      sendJson(res, 200, { manifest, configPath, rawYaml });
+      try {
+        const { manifest, configPath } = await loader.load(this.configPath);
+        const rawYaml = await fs.readFile(configPath, "utf-8");
+        sendJson(res, 200, { initialized: true, manifest, configPath, rawYaml });
+      } catch (err) {
+        if (err instanceof AirchConfigError) {
+          sendJson(res, 200, {
+            initialized: false,
+            message: err.message,
+          });
+          return;
+        }
+        throw err;
+      }
       return;
     }
 
@@ -223,11 +241,29 @@ export class UIServer {
 
     // 3. GET /api/diagnostics (リント)
     if (pathname === "/api/diagnostics" && req.method === "GET") {
-      const { manifest, configPath } = await loader.load(this.configPath);
-      const projectRoot = path.dirname(configPath);
-      const linter = new StructureLinter(projectRoot);
-      const result = await linter.lint(manifest);
-      sendJson(res, 200, result);
+      try {
+        const { manifest, configPath } = await loader.load(this.configPath);
+        const projectRoot = path.dirname(configPath);
+        const linter = new StructureLinter(projectRoot);
+        const result = await linter.lint(manifest);
+        sendJson(res, 200, result);
+      } catch (err) {
+        if (err instanceof AirchConfigError) {
+          sendJson(res, 200, {
+            success: false,
+            summary: {
+              totalFilesScanned: 0,
+              errorCount: 0,
+              warningCount: 0,
+              fixedCount: 0,
+              durationMs: 0,
+            },
+            diagnostics: [],
+          });
+          return;
+        }
+        throw err;
+      }
       return;
     }
 
@@ -247,10 +283,18 @@ export class UIServer {
 
     // 5. GET /api/rules (ルール取得)
     if (pathname === "/api/rules" && req.method === "GET") {
-      const { manifest } = await loader.load(this.configPath);
-      const engine = new GeneratorEngine();
-      const files = engine.render(manifest);
-      sendJson(res, 200, { files });
+      try {
+        const { manifest } = await loader.load(this.configPath);
+        const engine = new GeneratorEngine();
+        const files = engine.render(manifest);
+        sendJson(res, 200, { files });
+      } catch (err) {
+        if (err instanceof AirchConfigError) {
+          sendJson(res, 200, { files: [] });
+          return;
+        }
+        throw err;
+      }
       return;
     }
 
@@ -265,6 +309,43 @@ export class UIServer {
       const engine = new GeneratorEngine(projectRoot);
       const files = await engine.write(manifest);
       sendJson(res, 200, { success: true, count: files.length });
+      return;
+    }
+
+    // 7. POST /api/init (プロジェクト初期化)
+    if (pathname === "/api/init" && req.method === "POST") {
+      if (this.isReadonly) {
+        sendJson(res, 403, { success: false, message: "サーバーは閲覧専用モードです" });
+        return;
+      }
+      try {
+        const body = await readBody(req);
+        const architecture = (body.architecture || "feature-sliced") as PresetName;
+        const projectDir = this.configPath ? path.dirname(path.resolve(this.configPath)) : process.cwd();
+        const detected = await detectProject(projectDir);
+        const projectName = body.projectName || detected.suggestedName;
+        const rootDir = body.root || detected.suggestedRoot;
+
+        const manifest = getPreset(architecture, projectName, rootDir);
+        const fullYamlContent = stringifyManifest(manifest);
+        const manifestPath = this.configPath ? path.resolve(this.configPath) : path.join(projectDir, "airch.yaml");
+
+        await fs.writeFile(manifestPath, fullYamlContent, "utf-8");
+
+        const engine = new GeneratorEngine(projectDir);
+        const writtenFiles = await engine.write(manifest, undefined, projectDir);
+
+        sendJson(res, 200, {
+          success: true,
+          manifestPath,
+          files: writtenFiles.map((f) => f.relativePath),
+        });
+      } catch (err) {
+        sendJson(res, 500, {
+          success: false,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
       return;
     }
 

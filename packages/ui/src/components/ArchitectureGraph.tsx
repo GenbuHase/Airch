@@ -78,7 +78,7 @@ export const ArchitectureGraph: React.FC<ArchitectureGraphProps> = ({
   manifestData,
   diagnosticsData,
 }) => {
-  const structure = manifestData.manifest.structure;
+  const structure = manifestData?.manifest?.structure || [];
 
   const { nodes, edges } = useMemo(() => {
     const generatedNodes: Node[] = [];

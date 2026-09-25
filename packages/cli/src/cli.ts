@@ -3,6 +3,7 @@ import pc from "picocolors";
 import { AirchConfigError } from "@airch/core";
 import { executeGenerate, type GenerateCommandOptions } from "./commands/generate.js";
 import { executeCheck, type CheckCommandOptions } from "./commands/check.js";
+import { executeInit, type InitCommandOptions } from "./commands/init.js";
 import { logger } from "./utils/logger.js";
 
 export function createProgram(): Command {
@@ -49,13 +50,20 @@ export function createProgram(): Command {
       }
     });
 
-  // 未実装コマンドのプレースホルダー（親切な案内）
+  // init コマンド
   program
     .command("init")
-    .description("プロジェクトの初期化ウィザードを実行し airch.yaml を生成 (Phase 3予定)")
-    .action(() => {
-      logger.info(pc.yellow("'airch init' は現在開発中です (Phase 3予定)。"));
-      logger.info("現在は 'airch.example.yaml' をコピーして 'airch.yaml' としてご利用いただけます。");
+    .description("プロジェクトの初期化ウィザードを実行し airch.yaml を生成")
+    .option("-p, --preset <name>", "アーキテクチャプリセットを指定 (feature-sliced, clean-architecture, layered)")
+    .option("-y, --yes", "対話プロンプトをスキップしデフォルト値で自動生成")
+    .option("-f, --force", "既存の airch.yaml が存在する場合に上書き")
+    .option("-o, --out-dir <path>", "生成先ディレクトリ (デフォルト: カレントディレクトリ)")
+    .action(async (cmdOptions: InitCommandOptions) => {
+      try {
+        await executeInit(cmdOptions);
+      } catch (err) {
+        handleCliError(err);
+      }
     });
 
   // check コマンド

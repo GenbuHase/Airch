@@ -21,3 +21,9 @@ export * from "./linter/path-resolver.js";
 export * from "./linter/ast-analyzer.js";
 export * from "./linter/boundary.js";
 export * from "./linter/linter.js";
+
+// アーキテクチャプリセット & 自動推測
+export * from "./presets/index.js";
+export * from "./presets/feature-sliced.js";
+export * from "./presets/clean-architecture.js";
+export * from "./presets/layered.js";

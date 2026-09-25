@@ -1,9 +1,9 @@
 import { Command } from "commander";
-import pc from "picocolors";
 import { AirchConfigError } from "@airch/core";
 import { executeGenerate, type GenerateCommandOptions } from "./commands/generate.js";
 import { executeCheck, type CheckCommandOptions } from "./commands/check.js";
 import { executeInit, type InitCommandOptions } from "./commands/init.js";
+import { executeUi, type UiCommandOptions } from "./commands/ui.js";
 import { logger } from "./utils/logger.js";
 
 export function createProgram(): Command {
@@ -93,12 +93,27 @@ export function createProgram(): Command {
       }
     });
 
+  // ui コマンド
   program
     .command("ui")
     .alias("studio")
-    .description("ローカルWebダッシュボード (airch ui) を起動 (Phase 4予定)")
-    .action(() => {
-      logger.info(pc.yellow("'airch ui' は現在開発中です (Phase 4予定)。"));
+    .description("ローカルWebダッシュボード (airch ui) を起動")
+    .option("-p, --port <number>", "サーバーポート番号", "4567")
+    .option("--host <string>", "リッスンするホストアドレス", "localhost")
+    .option("--no-open", "ブラウザの自動起動を無効化")
+    .option("--readonly", "閲覧専用モード (変更・保存APIを無効化)")
+    .action(async (cmdOptions: Omit<UiCommandOptions, "config">) => {
+      const globalOpts = program.opts<{ config?: string }>();
+      const options: UiCommandOptions = {
+        ...cmdOptions,
+        config: globalOpts.config,
+      };
+
+      try {
+        await executeUi(options);
+      } catch (err) {
+        handleCliError(err);
+      }
     });
 
   return program;

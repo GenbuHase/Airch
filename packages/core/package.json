@@ -1,6 +1,6 @@
 {
   "name": "@genbuhase/airch-core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Core manifest parser, validator, and AI context generator for airch",
   "type": "module",
   "main": "./dist/index.js",

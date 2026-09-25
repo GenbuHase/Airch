@@ -136,7 +136,7 @@ CLIおよびYAMLマニフェスト（`airch.yaml`）は、Git管理やCI/CDパ�
 | **GUI Frontend** | **React 19 + TypeScript** | エコシステムの豊富さ、型安全性、コンポーネント資産の活用 |
 | **Build Tool** | **Vite** | 超高速なビルド・HMR、軽量な静的アセットバンドル |
 | **Graph Visualization** | **@xyflow/react (React Flow)** | ノードベースUI・ネットワークグラフの業界デファクト。カスタマイズ性とパフォーマンスに優れる |
-| **Styling & UI Components** | **Tailwind CSS + Radix UI (shadcn/ui)** | ダークモード対応、モダンで洗練された開発者向けUI、アクセシビリティ |
+| **Styling & UI Components** | **Tailwind CSS v4 + DaisyUI 5** | Fomantic-UI 同等の直感的でセマンティックなクラス設計（card, badge, tabs, stats, alert 等）、マルチテーマ対応、超軽量バンドル |
 | **Code Editor** | **Monaco Editor (@monaco-editor/react)** | VSCodeと同等のYAML編集体験、シンタックスハイライト、スキーマ補完 |
 | **Local Server / Bridge** | **Node.js Native HTTP / Hono** | 依存関係が極めて小さく、CLIバイナリに同梱可能な軽量Webサーバー |
 | **Realtime Sync** | **WebSocket / SSE** | ローカルファイルの変更をミリ秒単位でフロントエンドへプッシュ配信 |

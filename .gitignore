@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build artifacts
+dist/
+*.tsbuildinfo
+
+# Test and coverage
+coverage/
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.log
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Generated AI rule files (optional in repo, but airch manages these)
+# AGENTS.md
+# .cursorrules

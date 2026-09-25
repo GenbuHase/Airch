@@ -1,0 +1,27 @@
+{
+  "name": "@genbuhase/airch",
+  "version": "0.1.0",
+  "description": "Architectural manifest & AI context generator for AI-driven development",
+  "type": "module",
+  "bin": {
+    "airch": "./dist/bin.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@airch/core": "workspace:*",
+    "commander": "^13.1.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10"
+  }
+}

@@ -1,0 +1,25 @@
+version: "1.0"
+project:
+  name: "my-awesome-app"
+  architecture: "feature-sliced" # 例: clean-architecture, feature-sliced, layer-based
+
+# ディレクトリ構造とルールの定義
+structure:
+  - path: "src/features/*"
+    allowed_imports: ["src/components/ui", "src/lib"]
+    forbidden_imports: ["src/features/*"] # Feature同士の直接依存を禁止
+    naming_convention: "kebab-case"
+    required_files:
+      - "index.ts"
+      - "types.ts"
+
+  - path: "src/components/ui"
+    allowed_imports: ["src/lib"]
+    naming_convention: "PascalCase"
+
+# コーディングスタイル・AIへの指示事項
+conventions:
+  typescript:
+    strict: true
+    export_style: "named" # default export の禁止
+  state_management: "Zustand only. Do not use React Context for global state."

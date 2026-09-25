@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://unpkg.com/@genbuhase/airch/schema/v1.json
+version: "1.0"
+
+project:
+  name: "airch"
+  architecture: "modular-monorepo"
+  description: "Architectural manifest & AI context generator for AI-driven development"
+  root: "packages"
+
+structure:
+  - name: "Core Package"
+    path: "packages/core/src/**"
+    description: "Core domain logic, schemas, parser, generator, and linter"
+    forbidden_imports:
+      - "packages/cli/**"
+      - "packages/ui/**"
+
+  - name: "CLI Package"
+    path: "packages/cli/src/**"
+    description: "CLI commands, reporters, and local UI server"
+    forbidden_imports:
+      - "packages/ui/src/**"
+
+  - name: "UI Package"
+    path: "packages/ui/src/**"
+    description: "Web dashboard frontend built with React and DaisyUI"
+    forbidden_imports:
+      - "packages/cli/src/**"
+
+conventions:
+  typescript:
+    strict: true
+    export_style: "named"
+    type_import_style: "type-only"
+  rules:
+    - "packages/core must remain standalone and never import from packages/cli or packages/ui"
+    - "packages/cli must not directly import internals of packages/ui"
+    - "packages/ui must not directly import internals of packages/cli"
+    - "All code must be strictly typed and unit tested"
+
+commands:
+  build:
+    run: "pnpm -r run build"
+    description: "Build all packages in monorepo"
+  test:
+    run: "vitest run"
+    description: "Run all test suites"
+  check:
+    run: "pnpm airch check --strict --format github"
+    description: "Verify architectural boundaries"

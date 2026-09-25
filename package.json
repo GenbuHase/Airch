@@ -1,9 +1,10 @@
 {
   "name": "@genbuhase/airch",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "private": true,
   "description": "Architectural manifest & AI context generator for AI-driven development",
   "scripts": {
+    "airch": "node packages/cli/dist/bin.js",
     "build": "pnpm -r run build",
     "test": "vitest run",
     "test:watch": "vitest"

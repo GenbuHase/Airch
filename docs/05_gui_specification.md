@@ -116,14 +116,37 @@ CLIおよびYAMLマニフェスト（`airch.yaml`）は、Git管理やCI/CDパ�
 
 ---
 
+### 3.5 機能 5: 未初期化プロジェクトのオンボーディング & クイック初期化 (Quick Setup)
+`airch.yaml` が未作成のプロジェクトで `airch ui` を実行した際でもエラーにならず、スムーズにプロジェクトをセットアップできる案内画面を提供します。
+
+- **Setup Required ガイダンス**:
+  - `airch.yaml not found` の警告アラートと、ターミナルで実行可能な `pnpm airch init` コマンドのワンクリックコピーUI。
+- **1-Click プリセット初期化**:
+  - `POST /api/init` と連携し、画面上のプリセット選択カード（Feature-Sliced Design / Clean Architecture / Layered MVC）をクリックするだけで、初期 `airch.yaml` および `AGENTS.md` などのルールファイルを自動生成。
+  - 初期化完了後は即座に Overview グラフ画面へシームレスに遷移。
+
+---
+
+### 3.6 機能 6: セマンティックUI & マルチテーマ切り替え (DaisyUI 5 Dynamic Themes)
+Tailwind CSS v4 と DaisyUI 5 を組み合わせたセマンティックコンポーネント設計を採用し、開発者の好みに応じたカラーテーマ即時切り替えをサポートします。
+
+- **DaisyUI 5 コンポーネント**: Card, Badge, Alert, Stats, Tabs, Drawer, Navbar 等をセマンティックに活用。
+- **テーマセレクター (`ThemeSelector`)**:
+  - ナビゲーションバーから `dark`, `night`, `dracula`, `corporate`, `light` などのテーマを即時切り替え可能。
+  - 選択したテーマは `localStorage` に自動永続化。
+
+---
+
 ## 4. UI/UX 画面構成
 
-ダッシュボードは、以下の4画面（タブ）で構成されます。
+ダッシュボードは、以下の画面およびコンポーネントで構成されます。
 
-| タブ名 | 用途・機能 |
+| 画面 / コンポーネント | 用途・機能 |
 | :--- | :--- |
-| **1. Overview (Architecture Graph)** | モジュール境界とレイヤー構造の全体ネットワーク図、違反エッジのハイライト |
-| **2. Violations (Linter Report)** | 検出された違反の一覧、フィルタリング（重要度・レイヤー別）、インライン修正 |
+| **Setup Required (未初期化画面)** | マニフェスト未存在時に表示されるオンボーディング画面。CLIコマンド案内および1クリックプリセット初期化 |
+| **Global Header / Nav** | プロジェクト名、健全性バッジ、同期状態インジケータ、テーマセレクター（`ThemeSelector`） |
+| **1. Overview (Architecture Graph)** | モジュール境界とレイヤー構造の全体ネットワーク図（`@xyflow/react`）、違反エッジのハイライト |
+| **2. Violations (Linter Report)** | 検出された違反の一覧、重要度別統計カード（Stats）、ファイルパス・提案のインライン表示 |
 | **3. Manifest Editor (YAML / Form)** | フォーム形式およびMonaco Editorによる `airch.yaml` の編集・保存 |
 | **4. AI Guidelines (Rule Preview)** | `AGENTS.md` / `.cursorrules` 等の生成結果プレビューとエクスポート設定 |
 
@@ -148,7 +171,7 @@ CLIおよびYAMLマニフェスト（`airch.yaml`）は、Git管理やCI/CDパ�
 `airch ui` の追加を見据え、プロジェクト構造を疎結合なモノレポ構造（pnpm workspaces / Turborepo）として整理します。
 
 ```text
-airch/
+airch/ (root: @genbuhase/airch-root)
 ├── packages/
 │   ├── core/           # @genbuhase/airch-core: マニフェスト解析、Linter、Generator (純粋ロジック)
 │   ├── cli/            # @genbuhase/airch: commander によるコマンドライン実行バイナリ
@@ -167,6 +190,6 @@ airch/
 ## 7. 将来の拡張性 (Future Extensions)
 
 1. **VSCode / Cursor 拡張機能 (`vscode-airch`)**:
-   `@airch/ui` のWebviewコンポーネントを流用し、エディタ内のサイドパネルでアーキテクチャグラフを表示。
+   `@genbuhase/airch-ui` のWebviewコンポーネントを流用し、エディタ内のサイドパネルでアーキテクチャグラフを表示。
 2. **CI Artifact / HTML レポート生成**:
    `airch check --format html` を実行することで、静的なHTMLダッシュボード（グラフと違反レポート）を出力し、GitHub PagesやPRのアーティファクトとして閲覧可能にする機能。

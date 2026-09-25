@@ -171,8 +171,9 @@ flowchart TD
 - **主要責務**:
   1. **静的アセット配信**: ビルド済みの `@genbuhase/airch-ui`（Vite SPA）をローカルポート（デフォルト: `4567`）で配信。
   2. **API エンドポイント**:
-     - `GET /api/manifest`: 現在解決されている `airch.yaml` の内容を取得。
+     - `GET /api/manifest`: 現在解決されている `airch.yaml` の内容を取得（マニフェスト未存在時は 500 エラーではなく `{ exists: false }` を返却）。
      - `POST /api/manifest`: GUI上で編集されたマニフェストを検証・保存。
+     - `POST /api/init`: 未初期化プロジェクト向けに、指定プリセット（`feature-sliced`, `clean-architecture`, `layered` 等）で `airch.yaml` および初期AIルールを即時生成。
      - `GET /api/diagnostics`: 最新のアーキテクチャリント診断結果を取得。
      - `POST /api/generate`: AIルールファイルの即時再生成。
   3. **ファイル監視とプッシュ同期 (WebSocket / SSE)**:
@@ -231,6 +232,8 @@ jobs:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
+      - name: Build monorepo packages
+        run: pnpm build
       - name: Verify Architecture Boundaries
         run: pnpm airch check --strict --format github
       - name: Verify AI Rules Sync
@@ -244,20 +247,22 @@ jobs:
 CLIおよびGUIツール（`airch ui`）の長期的な保守性と再利用性を高めるため、以下の3層パッケージ構成を採用します。
 
 ```text
-packages/
-  ├── core/       # @genbuhase/airch-core
-  │               ├── ManifestLoader (YAMLパース, Zod検証)
-  │               ├── GeneratorEngine (Markdown決定論的生成)
-  │               └── StructureLinter (AST境界解析, 命名規則チェック)
-  │
-  ├── cli/        # @genbuhase/airch
-  │               ├── Commander CLI 定義 (init, generate, check, ui)
-  │               └── CI/CD レポーター (Console, GitHub, JSON, SARIF)
-  │
-  └── ui/         # @genbuhase/airch-ui (GUI Web Dashboard)
-                  ├── React 19 + Vite フロントエンド
-                  ├── @xyflow/react アーキテクチャグラフ
-                  └── Monaco Editor 双方向同期エディタ
+airch/ (root: @genbuhase/airch-root)
+├── packages/
+│   ├── core/       # @genbuhase/airch-core
+│   │               ├── ManifestLoader (YAMLパース, Zod検証)
+│   │               ├── GeneratorEngine (Markdown決定論的生成)
+│   │               └── StructureLinter (AST境界解析, 命名規則チェック)
+│   │
+│   ├── cli/        # @genbuhase/airch (ターミナル実行バイナリ)
+│   │               ├── Commander CLI 定義 (init, generate, check, ui)
+│   │               ├── UIServer (内蔵HTTP API & 静的アセット配信)
+│   │               └── CI/CD レポーター (Console, GitHub, JSON, SARIF)
+│   │
+│   └── ui/         # @genbuhase/airch-ui (GUI Web Dashboard)
+│                   ├── React 19 + Vite フロントエンド
+│                   ├── Tailwind CSS v4 + DaisyUI 5
+│                   └── @xyflow/react アーキテクチャグラフ
 ```
 
 - **依存の方向性**:

@@ -218,6 +218,13 @@ airch ui [options]
 | `--open` | `boolean` | `true` | サーバー起動時に自動でブラウザを開く (`--no-open` で無効化) |
 | `--readonly` | `boolean` | `false` | 閲覧専用モード（ファイル変更・保存APIを無効化） |
 
+#### 動作仕様
+- カレントディレクトリ（または `--config` で指定されたパス）に `airch.yaml` が存在しない場合でも、CLIサーバーは異常終了せず正常起動します。
+- ブラウザ上には自動的に **「Setup Required（セットアップ案内画面）」** が表示されます。
+  - ターミナルでの `pnpm airch init` コマンド実行ガイド（ワンクリックコピー対応）
+  - GUI上から直接主要プリセット（Feature-Sliced Design / Clean Architecture / Layered MVC）を選択して初期化できる **1-Click Quick Setup** 機能
+- 初期化完了後は即座にダッシュボード（Overviewグラフ、ルール設定）へ自動遷移します。
+
 #### ターミナル出力例
 ```text
 $ airch ui

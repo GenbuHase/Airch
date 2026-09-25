@@ -2,6 +2,7 @@ import { Command } from "commander";
 import pc from "picocolors";
 import { AirchConfigError } from "@airch/core";
 import { executeGenerate, type GenerateCommandOptions } from "./commands/generate.js";
+import { executeCheck, type CheckCommandOptions } from "./commands/check.js";
 import { logger } from "./utils/logger.js";
 
 export function createProgram(): Command {
@@ -57,11 +58,31 @@ export function createProgram(): Command {
       logger.info("現在は 'airch.example.yaml' をコピーして 'airch.yaml' としてご利用いただけます。");
     });
 
+  // check コマンド
   program
     .command("check")
-    .description("プロジェクト構造とインポート境界を検証 (Phase 2予定)")
-    .action(() => {
-      logger.info(pc.yellow("'airch check' は現在開発中です (Phase 2予定)。"));
+    .description("プロジェクト構造とインポート境界を検証 (Linter)")
+    .option("-s, --strict", "警告 (Warning) もエラーとして扱い、終了コード 1 を返却")
+    .option("--fix", "自動修正可能な項目（命名違反リネーム、必須ファイル生成）を自動実行")
+    .option(
+      "-f, --format <type>",
+      "出力フォーマット (pretty, json, github, sarif)",
+      "pretty"
+    )
+    .option("--changed-only", "Git 差分ファイルのみを対象に高速検証")
+    .option("--base <git-ref>", "Git 差分比較の対象参照 (デフォルト: HEAD)", "HEAD")
+    .action(async (cmdOptions: Omit<CheckCommandOptions, "config">) => {
+      const globalOpts = program.opts<{ config?: string }>();
+      const options: CheckCommandOptions = {
+        ...cmdOptions,
+        config: globalOpts.config,
+      };
+
+      try {
+        await executeCheck(options);
+      } catch (err) {
+        handleCliError(err);
+      }
     });
 
   program

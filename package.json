@@ -1,6 +1,6 @@
 {
   "name": "@genbuhase/airch",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "description": "Architectural manifest & AI context generator for AI-driven development",
   "scripts": {
